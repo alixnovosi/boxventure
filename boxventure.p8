@@ -39,12 +39,37 @@ function move_player()
 
     -- todo implement jumping this time
     -- 2 up
-    if btn(2) then
+    if btn(2) and player.jump_hold_frames < player.max_jump_hold_frames then
+        player.v_vel -= 1 * player.jump_acc
+
+        if player.v_vel < (player.max_v_vel * -1) then
+            player.v_vel = player.max_v_vel * -1
+        end
+
+        player.jump_hold_frames += 1
+
+    else
+
+        if player.v_vel < player.max_v_vel then
+            player.v_vel += level.grav_acc * 1
+        end
+
+        if player.jump_hold_frames > 0 then
+            player.jump_hold_frames = 0
+        end
     end
+
+    debug_update("player.v_vel", player.v_vel)
+    debug_update("player.jump_hold_frames", player.jump_hold_frames)
 
     -- 3 down
     if btn(3) then
     end
+
+
+
+    dy += player.v_vel * 1
+
 
     -- reset
     if btnp(4) and btnp(5) then
@@ -111,7 +136,7 @@ function debug_update(k, v)
 end
 
 -- pico8 necessary methods
-function _update()
+function _update60()
     move_player()
 end
 
@@ -133,6 +158,7 @@ function _init()
     level = {
         startx = 1,
         starty = 5,
+        grav_acc = 0.2,
         mapx = 0,
         mapy = 0,
         debug = true,
@@ -141,6 +167,11 @@ function _init()
     -- player init
     player = {
         move_speed = 0.5,
+        jump_acc = 0.2,
+        max_v_vel = 0.8,
+        v_vel = 0,
+        jump_hold_frames = 0,
+        max_jump_hold_frames = 3,
         sprite = 33,
         flipped = false,
     }
