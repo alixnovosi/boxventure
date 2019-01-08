@@ -49,12 +49,12 @@ end
 function apply_player_move(dx, dy)
     player_left = flr(player.x + (cell_size / 2) - (player.width / 2))
     player_top = flr(player.y + (cell_size / 2) - (player.height / 2))
-    player_right = flr(player.x + (cell_size / 2) + (player.width / 2)) - 1
-    player_bottom = flr(player.y + (cell_size / 2) + (player.height / 2)) - 1
+    player_right = flr(player.x + (cell_size / 2) + (player.width / 2))
+    player_bottom = flr(player.y + (cell_size / 2) + (player.height / 2))
 
     -- get rows we're in
-    top_row = flr(player_top / cell_size)
-    bottom_row = flr(player_bottom / cell_size)
+    top_row = to_cell_inclusive(player_top)
+    bottom_row = to_cell_exclusive(player_bottom)
 
     rows = {}
     rows[1] = top_row
@@ -65,8 +65,8 @@ function apply_player_move(dx, dy)
     end
 
     -- get cols we're in
-    left_col = flr(player_left / cell_size)
-    right_col = flr(player_right / cell_size)
+    left_col = to_cell_inclusive(player_left)
+    right_col = to_cell_exclusive(player_right)
 
     cols = {}
     cols[1] = left_col
@@ -171,6 +171,14 @@ function apply_player_move(dx, dy)
             end
         end
     end
+end
+
+function to_cell_inclusive(pixel)
+    return flr(pixel / cell_size)
+end
+
+function to_cell_exclusive(pixel)
+    return flr((pixel-1) / cell_size)
 end
 
 function is_collidable(cell_x, cell_y)
