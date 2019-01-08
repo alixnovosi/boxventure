@@ -63,7 +63,6 @@ function apply_player_move(dx, dy)
             rows[#rows+1] = i
         end
     end
-    debug_update("rows", #rows)
 
     -- get cols we're in
     left_col = flr(player_left / cell_size)
@@ -76,7 +75,6 @@ function apply_player_move(dx, dy)
             cols[#cols+1] = i
         end
     end
-    debug_update("cols", #cols)
 
     -- TODO find ways to dedupe
     if dx > 0 then
@@ -91,7 +89,8 @@ function apply_player_move(dx, dy)
             -- see if we can continue moving
             can_move = true
             for row in all(rows) do
-                if is_collidable(right_col+1, row) then
+                coll = is_collidable(right_col+1, row)
+                if coll then
                     can_move = false
                     break
                 end
@@ -103,7 +102,7 @@ function apply_player_move(dx, dy)
         end
     elseif dx < 0 then
         -- move to square edge
-        dist_to_cell_edge = player.x - (left_col * cell_size)
+        dist_to_cell_edge = player_left - (left_col * cell_size)
         if dist_to_cell_edge >= abs(dx) then
             player.x += dx
         else
@@ -113,8 +112,8 @@ function apply_player_move(dx, dy)
             -- see if we can continue moving
             can_move = true
             for row in all(rows) do
-                col = is_collidable(left_col-1, row)
-                if col then
+                coll = is_collidable(left_col-1, row)
+                if coll then
                     can_move = false
                     break
                 end
@@ -172,14 +171,9 @@ function apply_player_move(dx, dy)
             end
         end
     end
-
-    debug_update("player.x", player.x)
-    debug_update("player.y", player.y)
 end
 
 function is_collidable(cell_x, cell_y)
-    debug_update("cell_x", cell_x)
-    debug_update("cell_x_coord", cell_x * cell_size)
     col = fget(mget(cell_x * spritescale, cell_y*spritescale), 0)
     return col
 end
