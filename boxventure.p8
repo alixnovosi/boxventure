@@ -55,7 +55,7 @@ function handle_use()
     row = to_cell(flr(player.y + player.height / 2))
 
     -- exit
-    if fget(mget(col * spritescale, row * spritescale), 1) then
+    if fget(mget(col, row), 1) then
         run_credits()
     end
 end
@@ -74,26 +74,12 @@ function draw_credits()
 end
 
 function move_credits()
-    -- 0 left
-    if btn(0) then
-        credits.x -= player.move_speed
-    end
+    if (btn(0)) then credits.x -= player.move_speed end
+    if (btn(1)) then credits.x += player.move_speed end
+    if (btn(2)) then credits.y -= player.move_speed end
+    if (btn(3)) then credits.y += player.move_speed end
 
-    -- 1 right
-    if btn(1) then
-        credits.x += player.move_speed
-    end
-
-    -- 2 up
-    if btn(2) then
-        credits.y -= player.move_speed
-    end
-
-    -- 3 down
-    if btn(3) then
-        credits.y += player.move_speed
-    end
-
+    -- exit credits on button 1
     if btn(5) then
         done = false
         _init()
