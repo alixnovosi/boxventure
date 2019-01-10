@@ -7,9 +7,19 @@ __lua__
 -- 1 right
 -- 2 up
 -- 3 down
--- 4 x
--- 5 c
--- 6 z
+-- 4 'o'
+-- 5 'x'
+
+function update_camera_pos()
+    -- TODO think more about camera windows
+    camera_obj.x = player.x - camera_offset
+
+    if (camera_obj.y + camera_offset) - player.y > cell_size then
+        camera_obj.y -= 2
+    elseif player.y - (camera_obj.y + camera_offset) > cell_size then
+        camera_obj.y += 2
+    end
+end
 
 function move_player()
     local dx = 0
@@ -316,7 +326,8 @@ function draw_debug()
 
         for entry in all(debug_table.kv_sequence) do
             local res = entry.k..": "..tostr(entry.v)
-            print(res, player.x + off_x, player.y + off_y, 7)
+            print(res, camera_obj.x + camera_offset + off_x,
+                camera_obj.y + camera_offset + off_y, 7)
 
             off_y += base_cell_size
         end
@@ -329,7 +340,8 @@ end
 
 -- draw player at correct position.
 function draw_player()
-    camera(player.x - camera_offset, player.y - camera_offset)
+    update_camera_pos()
+    camera(camera_obj.x, camera_obj.y)
     spr(player.sprite, player.x, player.y, spritescale, spritescale, player.flipped)
 end
 
@@ -410,8 +422,13 @@ function _init()
         sprite = 33,
         flipped = false,
     }
-
     reset()
+
+    -- camera init
+    camera_obj = {
+        x = player.x - camera_offset,
+        y = player.y - camera_offset,
+    }
 
     -- debug table init
     debug_table = {
