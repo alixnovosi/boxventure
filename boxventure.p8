@@ -29,15 +29,6 @@ function move_player()
 
     dy += player.vv * 1
 
-    -- todo implement jumping this time
-    -- 2 up
-    if btn(2) then
-    end
-
-    -- 3 down
-    if btn(3) then
-    end
-
     if btn(4) then
         handle_use()
     end
@@ -56,7 +47,6 @@ function update_vv()
     bottom_row = to_cell(player_bottom, false)
 
     collidable_below = false
-    is_on_ground = false
     for col in all(cols) do
         if is_collidable(col, bottom_row+1) then
             collidable_below = true
@@ -64,25 +54,54 @@ function update_vv()
         end
     end
 
+    on_ground = false
     if collidable_below and (player_bottom % cell_size) == 0 then
-        is_on_ground = true
+        on_ground = true
     end
 
-    debug_update("is_on_ground", is_on_ground)
-
-    if btn(2) and abs(player.vv) < 3 then
+    -- apply jump if on ground. lock jump after some frames to allow variable height and cap jump.
+    if btn(2) and not player.jump_locked then
         player.vv += player.jump_acc * 1
+
+        if player.jump_started then
+            player.jump_frames += 1
+
+            if player.jump_frames >= player.max_jump_frames then
+                player.jump_started = false
+                player.jump_locked = true
+                player.jump_frames = 0
+            end
+        else
+            player.jump_started = true
+            player.jump_frames += 1
+        end
     end
 
     is_term_v = at_terminal_velocity()
     debug_update("term_v", is_term_v)
 
-    if not player.is_on_ground then
-        player.vv += (level.grav_acc * 1)
-        debug_update("v", player.vv)
-        debug_update("acc", level.grav_acc)
+    -- shouldn't apply gravity if we're on the ground, or if terminal velocity is reached.
+    debug_update("on_ground", on_ground)
+    if not on_ground and not is_term_v then
+
+        dv = level.grav_acc * 1
+
+        if player.term_v < player.vv + dv then
+            player.vv = player.term_v
+        else
+            player.vv += (level.grav_acc * 1)
+        end
     end
 
+    -- velocity should zero out on ground
+    if on_ground and player.vv > 0 then
+        player.vv = 0
+        if player.jump_locked then
+            player.jump_locked = false
+        end
+    end
+
+    debug_update("v", player.vv)
 end
 
 function at_terminal_velocity()
@@ -229,8 +248,6 @@ function apply_player_move(dx, dy)
             player.y += dist_to_cell_edge
             dy -= dist_to_cell_edge
 
-            player.is_on_ground = true
-
             -- see if we can continue moving
             can_move = true
             for col in all(cols) do
@@ -284,8 +301,7 @@ function to_cell(pixel, inclusive)
 end
 
 function is_collidable(cell_x, cell_y)
-    col = fget(mget(cell_x, cell_y), 0)
-    return col
+    return fget(mget(cell_x, cell_y), 0)
 end
 
 function reset()
@@ -294,10 +310,6 @@ function reset()
 end
 
 function draw_debug()
-    draw_debug_table()
-end
-
-function draw_debug_table()
     if (level.debug) then
         local off_x = -1 * cell_size * 4
         local off_y = -1 * cell_size * 4
@@ -386,11 +398,15 @@ function _init()
     player = {
         height = cell_size,
         width = cell_size - 2,
+        jump_started = false,
+        jump_locked = false,
+        jump_frames = 0,
+        max_jump_frames = 10,
         move_speed = 2,
-        jump_acc = -0.5,
-        term_v = 2,
-        acc = 0,
         vv = 0,
+        term_v = 2,
+        jump_acc = -0.5,
+        acc = 0,
         sprite = 33,
         flipped = false,
     }
