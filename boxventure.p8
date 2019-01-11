@@ -122,11 +122,7 @@ function at_terminal_velocity()
         return false
     end
 
-    debug_update("term", player.term_v)
-
-    if player.vv < player.term_v then
-        return false
-    end
+    if player.vv < player.term_v then return false end
 
     return true
 end
@@ -170,7 +166,7 @@ end
 function draw_credits()
     cls()
     print(credits.text, credits.x, credits.y, 7)
-    print("press x/button 2 to restart", credits.x, credits.y + base_cell_size, 7)
+    print("press buttons o + x to restart", credits.x, credits.y + base_cell_size, 7)
 end
 
 function move_credits()
@@ -180,7 +176,7 @@ function move_credits()
     if (btn(3)) then credits.y += player.move_speed end
 
     -- exit credits on button 1
-    if btn(5) then
+    if btn(4) and btn(5) then
         done = false
         _init()
     end
@@ -357,7 +353,6 @@ function add_to_map(x, y, sprite, scale)
     if scale == nil then
         scale = spritescale
     end
-    debug_update("scale", scale)
 
     for r=0, scale-1 do
         for c=0, scale-1 do
