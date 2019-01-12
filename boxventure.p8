@@ -115,8 +115,6 @@ function update_vv()
 
     -- I'm not even sure how this happened
     if player.vv == -0 then player.vv = 0 end
-
-    debug_update("v", player.vv)
 end
 
 function at_terminal_velocity()
@@ -124,7 +122,7 @@ function at_terminal_velocity()
         return false
     end
 
-    if player.vv < player.term_v then return false end
+    if (player.vv < player.term_v) return false
 
     return true
 end
@@ -134,12 +132,17 @@ function handle_use()
     col = to_cell(flr(player.x + player.width / 2))
     row = to_cell(flr(player.y + player.height / 2))
 
+    if level.sign_open then
+        level.sign_open = false
+    end
+
     -- exit
     if fget(mget(col, row), 1) then
         run_credits()
     elseif fget(mget(col, row), 2) then
         touch_object(col, row)
-    elseif mget(col, row) == 37 then
+    elseif mget(col, row) == 37 and not level.sign_open then
+        level.sign_open = true
         read_sign(col, row)
     end
 end
@@ -158,34 +161,39 @@ function touch_object(col, row)
     end
 end
 
--- this function will be easier if it always gets the upper-left col/row
-function read_sign(col, row)
+function draw_sign()
+    if not level.sign_open then
+        return
+    end
+
     text_offset = 4
+    border_color = 9
+    textbox_bg_color = 0
+    off_x, off_y = camera_relative_top_left()
+
     textbox_pos = {
-        x0 = camera_obj.x + camera_offset,
-        y0 = camera_obj.x + camera_offset + 15,
-        x1 = camera_obj.x + camera_offset + 30,
-        x1 = camera_obj.x + camera_offset + 256,
+        x0 = off_x + cell_size,
+        y0 = off_y,
+        x1 = off_x + 7 * cell_size - 1,
+        y1 = off_y + 2 * cell_size,
     }
 
-    rectfill(0, 0, 1000, 1000, 9)
-    x_collision = {}
-    for x=player.x, player.x+30 do
-        for y=player.y, player.y+30 do
-            add(player.x_collision, {x=x, y=y})
+    -- two-line border to look cool.
+    rect(textbox_pos.x0, textbox_pos.y0, textbox_pos.x1, textbox_pos.y1, border_color)
+    rectfill(textbox_pos.x0 + 1, textbox_pos.y0 + 1, textbox_pos.x1 - 1, textbox_pos.y1 - 1,
+        textbox_bg_color)
+    rect(textbox_pos.x0 + 2, textbox_pos.y0 + 2, textbox_pos.x1 - 2, textbox_pos.y1 - 2,
+        border_color)
+    print(level.last_sign_text, textbox_pos.x0 + text_offset, textbox_pos.y0 + text_offset, 7)
+end
+
+-- this function will be easier if it always gets the upper-left col/row
+function read_sign(col, row)
+    for sign in all(level.signs) do
+        if sign.x * spritescale == col and sign.y * spritescale == row then
+            level.last_sign_text = sign.text
         end
     end
-
-    for pixel in all(x_collision) do
-        circfill(pixel.x, pixel.y, 0, 9)
-    end
-    rectfill(player.x-2, player.y-2, player.x+30, player.y+30, 9)
-    print(textbox_pos.x0 + text_offset, textbox_pos.y0 + text_offset,
-    "This is a text box")
-
-    debug_update("textbox_pos.x0", textbox_pos.x0)
-    debug_update("debug", camera_obj.x + camera_offset)
-
 end
 
 function run_credits()
@@ -198,7 +206,6 @@ end
 function draw_credits()
     cls()
     print(credits.text, credits.x, credits.y, 7)
-    print("press buttons o + x to restart", credits.x, credits.y + base_cell_size, 7)
 end
 
 function move_credits()
@@ -400,15 +407,19 @@ function add_to_map(x, y, sprite, scale)
     end
 end
 
+function camera_relative_top_left()
+    return camera_obj.x + camera_offset + -1 * cell_size * 4,
+    camera_obj.y + camera_offset + -1 * cell_size * 4
+end
+
 function draw_debug()
     if (level.debug) then
-        local off_x = -1 * cell_size * 4
-        local off_y = -1 * cell_size * 4
+        x, y = camera_relative_top_left()
+        local off_y = 0
 
         for entry in all(debug_table.kv_sequence) do
             local res = entry.k..": "..tostr(entry.v)
-            print(res, camera_obj.x + camera_offset + off_x,
-                camera_obj.y + camera_offset + off_y, 7)
+            print(res, x, y + off_y, 7)
 
             off_y += base_cell_size
         end
@@ -453,6 +464,7 @@ function _draw()
         draw_map()
         draw_player()
         draw_objects()
+        draw_sign()
         draw_debug()
     else
         draw_credits()
@@ -483,17 +495,30 @@ function _init()
     level = {
         startx = 7 * cell_size,
         starty = 14 * cell_size,
+        sign_open = false,
+        last_sign_text = "",
         grav_acc = 0.2,
         mapx = 0,
         mapy = 0,
-        debug = true,
+        debug = false,
 
         -- these coordinates in cell_size cells
+        -- TODO text wrapping (a gigantic pain)
         signs = {
             {
                 x = 11,
                 y = 14,
-                text = "This is a test sign.",
+                text = "press (O) and (X) to\nreset position to here\npress (O) to close\nthese messages",
+            },
+            {
+                x = 12,
+                y = 26,
+                text = "something different",
+            },
+            {
+                x = 3,
+                y = 24,
+                text = "this is a bigh box",
             },
         },
         boxes = {
@@ -551,10 +576,10 @@ function _init()
     }
 
     credits = {
-        text = "you did it!",
+        text = "you did it!\npress buttons (O) + (X)\nto restart!\n(you can also move these " ..
+        "\ncredits around with the arrows)" ..
+        "\n\n\n\n\n\n\n\n\n\n\n\nmade by alixnovosi",
     }
-
-    draw_map()
 end
 __gfx__
 00000000556666666666665500000000000000000a444444444444a0aaaaaaaaaa44444444444444444444444444444444444444444444aaaaaaaaaa00000000
