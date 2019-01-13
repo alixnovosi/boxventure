@@ -147,12 +147,20 @@ function handle_use()
         -- biased to upper left, I think.
         -- so for left/up we only need to go one cell up, for down/right 2
         if btn(0) then
+            touch_object(col, row)
             touch_object(col-1, row)
+            touch_object(col-2, row)
         elseif btn(1) then
+            touch_object(col, row)
+            touch_object(col+2, row)
             touch_object(col+2, row)
         elseif btn(2) then
+            touch_object(col, row-0)
             touch_object(col, row-1)
+            touch_object(col, row-2)
         elseif btn(3) then
+            touch_object(col, row+0)
+            touch_object(col, row+1)
             touch_object(col, row+2)
         else
             touch_object(col, row)
@@ -196,10 +204,10 @@ end
 function touch_object(col, row)
     sprite = mget(col, row)
 
-    local c,r = get_actual_cell(col, row, 5, sprite)
-
     -- so far just boxes
-    if list_compare(sprite, gen_list(5)) then
+    box_sprite = 5
+    if list_compare(sprite, gen_list(box_sprite)) then
+        local c,r = get_actual_cell(col, row, box_sprite, sprite)
 
         -- touch box
         box_was_touched = false
@@ -220,6 +228,35 @@ function touch_object(col, row)
                     for key, value in pairs(sign.vars) do
                         if key == "box_touch_count" then
                             sign.vars.box_touch_count += 1
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    orb_sprite = 35
+    if list_compare(sprite, gen_list(orb_sprite)) then
+        local c,r = get_actual_cell(col, row, orb_sprite, sprite)
+
+        -- touch orb
+        orb_was_touched = false
+        for orb in all(level.orbs) do
+            if orb.x * spritescale == c and orb.y * spritescale == r then
+                orb.touched = true
+                orb_was_touched = true
+                break
+            end
+        end
+
+        -- update the sign tracking orb touches
+        if orb_was_touched then
+            for sign in all(level.signs) do
+                if sign.vars != nil then
+                    for key, value in pairs(sign.vars) do
+                        if key == "orb_touch_count" then
+                            sign.vars.orb_touch_count += 1
                             break
                         end
                     end
@@ -467,7 +504,11 @@ function draw_objects()
 
     orb_sprite = 35
     for orb in all(level.orbs) do
-        add_to_map(orb.x, orb.y, orb_sprite)
+        if orb.touched then
+            add_to_map(orb.x, orb.y, 66)
+        else
+            add_to_map(orb.x, orb.y, orb_sprite)
+        end
     end
 
     sign_sprite = 37
@@ -645,7 +686,7 @@ function _init()
                 text = "this is a bigh box",
             },
             {
-                x = 46,
+                x = 45,
                 y = 30,
                 text = "you have touched\n${box_touch_count}\nblocks",
                 is_dynamic = true,
@@ -654,15 +695,25 @@ function _init()
                 },
             },
             {
+                x = 48,
+                y = 30,
+                text = "you have touched\n${orb_touch_count}\norbs",
+                is_dynamic = true,
+                vars = {
+                    orb_touch_count = 0,
+                },
+            },
+            {
                 x = 34,
                 y = 30,
-                text = "the ORB doesn't\ndo anything yet\nsorry :(",
+                text = "you can also touch\nORBS\nwith (X)",
             },
         },
         orbs = {
             {
                 x = 33,
                 y = 30,
+                touched = false,
             },
         },
         boxes = {
@@ -778,22 +829,22 @@ __gfx__
 0000000000366666666663000056666666666500000000055000000055555dddddd66666ddddd66666ddddddd66666ddddddd66666dd66666666555500000000
 0000000000033666666330000005566666655000000000055000000055555dddddd66666ddddd66666ddddddd66666ddddddd66666ddddd66666555500000000
 0000000000000333333000000000055555500000000000055000000055555dddddd66666ddddd66666ddddddd66666ddddddd66666ddddd66666555500000000
-0333333333333330000000000000000000000000000000000000000055555dddddd66666ddddd66666ddddddd66666ddddddd66666ddddd66666555500000000
-3366666666666633000000000000000000000000000000000000000055555dddddd66666ddddd66666ddddddd66666ddddddd66666ddddd66666555500000000
-3655555555555563000000000000000000000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
-3656656656656563000000000000000000000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
-3656665656656563000000000000000000000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
-3655666556656563000000000000000000000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
-3655566656656563000000000000000000000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
-3656556665656563000000000000000000000000000000000000000055555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
-3656655666556563000000000000000000000000000000000000000055555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
-3656655566656563000000000000000000000000000000000000000055555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
-3656656556665563000000000000000000000000000000000000000055555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
-3656656655666563000000000000000000000000000000000000000055555dddddddddddddd666666666dd666666666dd666ddd666ddddddddd5555500000000
-3656656655566563000000000000000000000000000000000000000055555dddddddddddddd666666666dd666666666dd666ddd666ddddddddd5555500000000
-3655555555555563000000000000000000000000000000000000000055555dddddddddddddd666666666dd666666666dd666ddd666ddddddddd5555500000000
-3366666666666633000000000000000000000000000000000000000055555dddddddddddddd666ddd666dd666ddd666ddddd666dddddddddddd5555500000000
-0333333333333330000000000000000000000000000000000000000055555dddddddddddddd666ddd666dd666ddd666ddddd666dddddddddddd5555500000000
+0333333333333330000003333300000000000000000000000000000055555dddddd66666ddddd66666ddddddd66666ddddddd66666ddddd66666555500000000
+3366666666666633000336666777000000000000000000000000000055555dddddd66666ddddd66666ddddddd66666ddddddd66666ddddd66666555500000000
+3655555555555563003666667777700000000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
+3656656656656563036666667777770000000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
+3656665656656563036666667777777000000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
+3655666556656563366666667777777000000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
+3655566656656563366666666777777300000000000000000000000055555dddddd666666666666666dd666666666666666dd666666666666666555500000000
+3656556665656563366666666667776300000000000000000000000055555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
+3656655666556563366666666666666300000000000000000000000055555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
+3656655566656563366666666666666300000000000000000000000055555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
+3656656556665563366666666666666300000000000000000000000055555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
+3656656655666563036666666666663000000000000000000000000055555dddddddddddddd666666666dd666666666dd666ddd666ddddddddd5555500000000
+3656656655566563036666666666663000000000000000000000000055555dddddddddddddd666666666dd666666666dd666ddd666ddddddddd5555500000000
+3655555555555563003666666666630000000000000000000000000055555dddddddddddddd666666666dd666666666dd666ddd666ddddddddd5555500000000
+3366666666666633000336666663300000000000000000000000000055555dddddddddddddd666ddd666dd666ddd666ddddd666dddddddddddd5555500000000
+0333333333333330000003333330000000000000000000000000000055555dddddddddddddd666ddd666dd666ddd666ddddd666dddddddddddd5555500000000
 0000000000000000000000000000000000000000000000000000000055555dddddddddddddd666ddd666dd666ddd666ddddd666dddddddddddd5555500000000
 0000000000000000000000000000000000000000000000000000000055555dddddddddddddd66666666ddd666ddd666ddddd666dddddddddddd5555500000000
 0000000000000000000000000000000000000000000000000000000055555dddddddddddddd66666666ddd666ddd666ddddd666dddddddddddd5555500000000
