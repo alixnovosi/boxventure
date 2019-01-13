@@ -139,9 +139,14 @@ function handle_use()
     if fget(sprite, 1) then
         run_credits()
     elseif list_compare(sprite, gen_list(37)) and not level.sign_open then
+
+        -- TODO figure out why this isn't working - if you're to the right
+        -- you get a blank sign without the if fix there
         local c,r = get_actual_cell(col, row, 37, sprite)
-        level.sign_open = true
         read_sign(c, r)
+        if level.last_sign_text != "" then
+            level.sign_open = true
+        end
     else
         -- this is weird because grab isn't really centered and ends up
         -- biased to upper left, I think.
@@ -309,15 +314,46 @@ function read_sign(col, row)
     end
 end
 
+function update_menu()
+    if btnp(4) then
+        is_menu = false
+    end
+end
+
+function draw_menu()
+    -- fill screen
+    rectfill(0, 0, 1000, 1000, 6)
+
+    -- draw upper text box
+    rect(base_cell_size-2, base_cell_size-2, (15 * base_cell_size)+2, (6 * base_cell_size)+2, 5)
+    rect(base_cell_size-1, base_cell_size-1, (15 * base_cell_size)+1, (6 * base_cell_size)+1, 6)
+    rectfill(base_cell_size, base_cell_size, 15 * base_cell_size, 6 * base_cell_size, 5)
+
+    -- title and dev
+    print("box\nventure", base_cell_size + 2, base_cell_size + 2, 6)
+    print("BY ALIXNOVOSI", base_cell_size + 2, (base_cell_size * 4) + 10, 6)
+
+    -- boxes for styyyyyyle
+    spr(5, (cell_size * 6), (cell_size * 2)-2, 2, 2)
+    spr(5, (cell_size * 6), (cell_size * 1)-1, 2, 2)
+    spr(5, (cell_size * 5)+1, (cell_size * 2)-2, 2, 2)
+
+    -- draw bottom text box
+    rect((base_cell_size)-2, (base_cell_size*9)-2, (base_cell_size*15)+2, (base_cell_size*11)+2, 5)
+    rect((base_cell_size)-1, (base_cell_size*9)-1, (base_cell_size*15)+1, (base_cell_size*11)+1, 6)
+    rectfill(base_cell_size, base_cell_size*9, base_cell_size*15, base_cell_size*11, 5)
+
+    -- bottom text
+    print("press (X) to start", (base_cell_size)+2, (base_cell_size*9) + 2, 6)
+end
+
 function run_credits()
-    done = true
+    is_done = true
     credits.x = player.x - (4 * cell_size)
     credits.y = player.y - cell_size
-    cls()
 end
 
 function draw_credits()
-    cls()
     print(credits.text, credits.x, credits.y, 7)
 end
 
@@ -328,8 +364,8 @@ function move_credits()
     if (btn(3)) then credits.y += player.move_speed end
 
     -- exit credits on button 1
-    if btn(4) and btn(5) then
-        done = false
+    if btnp(4) then
+        camera(0, 0)
         _init()
     end
 end
@@ -546,7 +582,7 @@ function draw_debug()
 
         for entry in all(debug_table.kv_sequence) do
             local res = entry.k..": "..tostr(entry.v)
-            print(res, x, y + off_y, 7)
+            print(res, x, y + off_y, 9)
 
             off_y += base_cell_size
         end
@@ -607,28 +643,34 @@ end
 
 -- pico8 necessary methods
 function _update60()
-    if not done then
+    if is_menu then
+        update_menu()
+    elseif is_done then
+        move_credits()
+    else
         update_vv()
         move_player()
-    else
-        move_credits()
     end
 end
 
 function _draw()
-    if not done then
-        cls()
+    cls()
+    if is_menu then
+        draw_menu()
+    elseif is_done then
+        draw_credits()
+    else
         draw_map()
         draw_player()
         draw_objects()
         draw_sign()
-        draw_debug()
-    else
-        draw_credits()
     end
+    draw_debug()
 end
 
 function _init()
+    cls()
+
     -- editor limitations
     sprites_per_row = 16
 
@@ -637,7 +679,9 @@ function _init()
     cell_size = 16
     spritescale = flr(cell_size / base_cell_size)
 
-    done = false
+    -- state vars, for different screens
+    is_menu = true
+    is_done = false
 
     camera_offset = cell_size * 4
     textbox_offset = -camera_offset
@@ -651,6 +695,10 @@ function _init()
     -- 5
     -- 6
     -- 7
+
+    -- menu init
+    menu = {
+    }
 
     -- level init
     level = {
@@ -669,12 +717,12 @@ function _init()
             {
                 x = 11,
                 y = 14,
-                text = "press (X) and (O) to\nreset position to here\npress (X) to close\nthese messages",
+                text = "nothing important here",
             },
             {
                 x = 12,
                 y = 26,
-                text = "nothing important here",
+                text = "press (X) and (O) to\nreset position to here\npress (X) to close\nthese messages",
             },
             {
                 x = 9,
@@ -821,7 +869,7 @@ function _init()
     }
 
     credits = {
-        text = "you did it!\npress buttons (X) + (O)\nto restart!\n(you can also move these " ..
+        text = "you did it!\npress (X) to restart!\n(you can also move these " ..
         "\ncredits around with the arrows)" ..
         "\n\n\n\n\n\n\n\n\n\n\n\nmade by alixnovosi",
     }
@@ -835,14 +883,14 @@ __gfx__
 007007006655dddddddd5566037766677676773056556665566565655555555555dddddddddddddddddddddddddddddddddddddddddddd555555555500000000
 00000000655dddddddddd556037767777767773056555666566565655555555555dddddddddddddddddddddddddddddddddddddddddddd555555555500000000
 0000000065dddddddddddd56037766777767773056565566656565655555555555dddddddddddddddddddddddddddddddddddddddddddd555555555500000000
-0000000065dddddddddddd56037767777767773056566556665565655555555555dddddddddddddddddddddddddddddddddddddddddddd555555555500000000
-00000000655dddddddddd556037766677676773056566555666565655555555555dddddddddddddddddddddddddddddddddddddddddddd555555555500000000
-000000006655dddddddd55660377777777777730565665655666556555555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
-0000000066655dddddd556660377666776667730565665665566656555555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
-00000000665555dddd5555660377767777677730565665665556656555555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
-000000006555655dd55655560377767777677730565555555555556555555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
-0000000055566655556665550377767777677730556666666666665555555dddddd666666666666666dd666666666666666dd666666666666665555500000000
-0000000055666666666666550377666777677730055555555555555055555dddddd666666666666666dd666666666666666dd666666666666665555500000000
+0555555065dddddddddddd56037767777767773056566556665565655555555555dddddddddddddddddddddddddddddddddddddddddddd555555555500000000
+56656665655dddddddddd556037766677676773056566555666565655555555555dddddddddddddddddddddddddddddddddddddddddddd555555555500000000
+566656656655dddddddd55660377777777777730565665655666556555555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
+5566656566655dddddd556660377666776667730565665665566656555555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
+56566655665555dddd5555660377767777677730565665665556656555555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
+566566656555655dd55655560377767777677730565555555555556555555dddddddddddddddddddddddddddddddddddddddddddddddddddddd5555500000000
+5666566555566655556665550377767777677730556666666666665555555dddddd666666666666666dd666666666666666dd666666666666665555500000000
+0555555055666666666666550377666777677730055555555555555055555dddddd666666666666666dd666666666666666dd666666666666665555500000000
 0000000000000333333000000000055555000000055555555555555055555dddddd666666666666666dd666666666666666dd666666666666665555500000000
 0000000000033666666330000005566667770000566666666666666555555dddddd666666666666666dd666666666666666dd666666666666665555500000000
 0000000000366666666663000056666677777000565555555555556555555dddddd666666666666666dd666666666666666dd666666666666665555500000000
