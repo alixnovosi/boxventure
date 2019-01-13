@@ -746,7 +746,7 @@ function _init()
             {
                 x = 49,
                 y = 30,
-                text = "you have touched\n${orb_touch_count}\norbs",
+                text = "you have touched\n${orb_touch_count}\nORBS",
                 is_dynamic = true,
                 vars = {
                     orb_touch_count = 0,
