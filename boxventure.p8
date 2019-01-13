@@ -137,14 +137,49 @@ function handle_use()
     end
 
     -- exit
-    if fget(mget(col, row), 1) then
+    sprite = mget(col, row)
+    if fget(sprite, 1) then
         run_credits()
-    elseif fget(mget(col, row), 2) then
+    elseif fget(sprite, 2) then
         touch_object(col, row)
-    elseif mget(col, row) == 37 and not level.sign_open then
+    elseif list_compare(sprite, gen_list(37)) and not level.sign_open then
+        local c,r = get_actual_cell(col, row, 37, sprite)
         level.sign_open = true
-        read_sign(col, row)
+        read_sign(c, r)
     end
+end
+
+-- get actual cell when we did a fuzzy pick and have the cell to the right or something
+-- assumes square sprite
+function get_actual_cell(col, row, target_sprite, actual_sprite)
+    dc = actual_sprite - target_sprite
+    dr = (actual_sprite - target_sprite) / sprites_per_row
+
+    return col-dc, row-dr
+end
+
+-- generate a list of sprites based on a given sprite
+-- assumes you've given the upper-left corner of a spritescale x spritescale sprite
+function gen_list(sprite)
+    res = {}
+    count = 1
+    for c=0, spritescale-1 do
+        for r=0, spritescale-1 do
+            res[count] = sprite + c + (r * sprites_per_row)
+            count += 1
+        end
+    end
+
+    return res
+end
+
+-- check if square in a list of sprites
+function list_compare(target, sprites)
+    for sprite in all(sprites) do
+        if target == sprite then return true end
+    end
+
+    return false
 end
 
 function touch_object(col, row)
@@ -407,7 +442,7 @@ function add_to_map(x, y, sprite, scale)
         for c=0, scale-1 do
             mset(spritescale * x + (c),
                  spritescale * y + (r),
-                 sprite + c + (r * 16))
+                 sprite + c + (r * sprites_per_row))
         end
     end
 end
@@ -508,6 +543,10 @@ function _draw()
 end
 
 function _init()
+    -- editor limitations
+    sprites_per_row = 16
+
+    -- our worlds stats
     base_cell_size = 8
     cell_size = 16
     spritescale = flr(cell_size / base_cell_size)
@@ -586,6 +625,26 @@ function _init()
             {
                 x = 16,
                 y = 28,
+            },
+            {
+                x = 24,
+                y = 30,
+            },
+            {
+                x = 25,
+                y = 30,
+            },
+            {
+                x = 26,
+                y = 30,
+            },
+            {
+                x = 27,
+                y = 30,
+            },
+            {
+                x = 28,
+                y = 30,
             },
         },
     }
