@@ -201,9 +201,10 @@ function draw_sign()
         return
     end
 
+    text_color = 9
     text_offset = 4
     border_color = 9
-    textbox_bg_color = 0
+    textbox_bg_color = 4
     off_x, off_y = camera_relative_top_left()
 
     textbox_pos = {
@@ -219,7 +220,8 @@ function draw_sign()
         textbox_bg_color)
     rect(textbox_pos.x0 + 2, textbox_pos.y0 + 2, textbox_pos.x1 - 2, textbox_pos.y1 - 2,
         border_color)
-    print(level.last_sign_text, textbox_pos.x0 + text_offset, textbox_pos.y0 + text_offset, 7)
+    print(level.last_sign_text, textbox_pos.x0 + text_offset, textbox_pos.y0 + text_offset,
+        text_color)
 end
 
 -- this function will be easier if it always gets the upper-left col/row
