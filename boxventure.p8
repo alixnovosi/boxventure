@@ -344,7 +344,7 @@ function draw_menu()
     rectfill(base_cell_size, base_cell_size*9, base_cell_size*15, base_cell_size*11, 5)
 
     -- bottom text
-    print("press (X) to start", (base_cell_size)+2, (base_cell_size*9) + 2, 6)
+    print("press (O) to start", (base_cell_size)+2, (base_cell_size*9) + 2, 6)
 end
 
 function run_credits()
@@ -722,12 +722,12 @@ function _init()
             {
                 x = 12,
                 y = 26,
-                text = "press (X) and (O) to\nreset position to here\npress (X) to close\nthese messages",
+                text = "(O) + (X) reset\nposition to start\n(O) to close\nthese messages",
             },
             {
                 x = 9,
                 y = 28,
-                text = "touch boxes with (X)",
+                text = "touch boxes with (O)",
             },
             {
                 x = 3,
@@ -755,7 +755,7 @@ function _init()
             {
                 x = 34,
                 y = 30,
-                text = "you can also touch\nORBS\nwith (X)",
+                text = "you can also touch\nORBS\nwith (O)",
             },
             {
                 x = 17,
@@ -869,7 +869,7 @@ function _init()
     }
 
     credits = {
-        text = "you did it!\npress (X) to restart!\n(you can also move these " ..
+        text = "you did it!\npress (O) to restart!\n(you can also move these " ..
         "\ncredits around with the arrows)" ..
         "\n\n\n\n\n\n\n\n\n\n\n\nmade by alixnovosi",
     }
